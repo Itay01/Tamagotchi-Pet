@@ -5,6 +5,61 @@
 # import tkinter as tk
 # from tkinter import messagebox, simpledialog
 #
+# class Command(ABC):
+#     @abstractmethod
+#     def execute(self):
+#         pass
+#
+# class FeedCommand(Command):
+#     def __init__(self, pet):
+#         self.pet = pet
+#
+#     def execute(self):
+#         food_choice = tk.simpledialog.askstring(
+#             "Feeding",
+#             "What would you like to feed your pet?\n1. Meal\n2. Snack"
+#         )
+#         if food_choice == '1':
+#             self.pet.feed('meal')
+#         elif food_choice == '2':
+#             self.pet.feed('snack')
+#         else:
+#             messagebox.showerror("Error", "Invalid choice.")
+#
+# class SleepCommand(Command):
+#     def __init__(self, pet):
+#         self.pet = pet
+#
+#     def execute(self):
+#         self.pet.sleep()
+#
+# class ExerciseCommand(Command):
+#     def __init__(self, pet):
+#         self.pet = pet
+#
+#     def execute(self):
+#         self.pet.exercise()
+#
+# class PlayCommand(Command):
+#     def __init__(self, pet):
+#         self.pet = pet
+#
+#     def execute(self):
+#         self.pet.play_with()
+#
+# class CleanCommand(Command):
+#     def __init__(self, pet):
+#         self.pet = pet
+#
+#     def execute(self):
+#         self.pet.clean()
+#
+# class SpecialAbilityCommand(Command):
+#     def __init__(self, pet):
+#         self.pet = pet
+#
+#     def execute(self):
+#         self.pet.activate_special_ability()
 #
 # class Pet(ABC):
 #     LIFE_STAGES = ['Baby', 'Child', 'Teenager', 'Adult', 'Senior']
@@ -308,14 +363,22 @@
 #
 #         # Action Buttons
 #         self.button_frame = tk.Frame(self.game_frame)
-#         tk.Button(self.button_frame, text="Eat", command=self.feed_pet).grid(row=0, column=0)
-#         tk.Button(self.button_frame, text="Sleep", command=self.pet_sleep).grid(row=0, column=1)
-#         tk.Button(self.button_frame, text="Exercise", command=self.pet_exercise).grid(row=0, column=2)
-#         tk.Button(self.button_frame, text="Play", command=self.pet_play).grid(row=0, column=3)
-#         tk.Button(self.button_frame, text="Clean", command=self.pet_clean).grid(row=0, column=4)
-#         tk.Button(self.button_frame, text="Special Ability", command=self.use_special_ability).grid(row=0, column=5)
+#         tk.Button(self.button_frame, text="Eat", command=self.execute_command(FeedCommand)).grid(row=0, column=0)
+#         tk.Button(self.button_frame, text="Sleep", command=self.execute_command(SleepCommand)).grid(row=0, column=1)
+#         tk.Button(self.button_frame, text="Exercise", command=self.execute_command(ExerciseCommand)).grid(row=0, column=2)
+#         tk.Button(self.button_frame, text="Play", command=self.execute_command(PlayCommand)).grid(row=0, column=3)
+#         tk.Button(self.button_frame, text="Clean", command=self.execute_command(CleanCommand)).grid(row=0, column=4)
+#         tk.Button(self.button_frame, text="Special Ability", command=self.execute_command(SpecialAbilityCommand)).grid(row=0, column=5)
 #         tk.Button(self.button_frame, text="Quit", command=self.root.quit).grid(row=0, column=6)
 #         self.button_frame.pack()
+#
+#     def execute_command(self, command_class):
+#         def command_function():
+#             if self.pet and self.pet.alive:
+#                 command = command_class(self.pet)
+#                 command.execute()
+#                 self.update_status()
+#         return command_function
 #
 #     def choose_pet(self, choice):
 #         name = tk.simpledialog.askstring("Pet Name", "Enter your pet's name:")
@@ -351,42 +414,12 @@
 #             status = self.pet.status()
 #             self.status_label.config(text=f"{self.pet.name}'s Status:\n{status}")
 #
-#     def feed_pet(self):
-#         if self.pet and self.pet.alive:
-#             food_choice = tk.simpledialog.askstring("Feeding",
-#                                                     "What would you like to feed your pet?\n1. Meal\n2. Snack")
-#             if food_choice == '1':
-#                 self.pet.feed('meal')
-#             elif food_choice == '2':
-#                 self.pet.feed('snack')
-#             else:
-#                 messagebox.showerror("Error", "Invalid choice.")
-#             self.update_status()
-#
-#     def pet_sleep(self):
-#         if self.pet and self.pet.alive:
-#             self.pet.sleep()
-#
-#     def pet_exercise(self):
-#         if self.pet and self.pet.alive:
-#             self.pet.exercise()
-#
-#     def pet_play(self):
-#         if self.pet and self.pet.alive:
-#             self.pet.play_with()
-#
-#     def pet_clean(self):
-#         if self.pet and self.pet.alive:
-#             self.pet.clean()
-#
-#     def use_special_ability(self):
-#         if self.pet and self.pet.alive:
-#             self.pet.activate_special_ability()
-#
 # if __name__ == '__main__':
 #     root = tk.Tk()
 #     game = GameManager(root)
 #     root.mainloop()
+
+
 
 
 
@@ -661,6 +694,11 @@ class Pet(ABC):
         return status_text
 
 class Dog(Pet):
+    def __init__(self, name, color, pattern, accessories, update_status_callback):
+        super().__init__(name, color, pattern, accessories, update_status_callback)
+        # Unique attribute
+        self.favorite_toy = "Ball"
+
     def characteristic(self):
         messagebox.showinfo("Pet Info", f"{self.name} is a loyal and playful dog!")
 
@@ -677,7 +715,19 @@ class Dog(Pet):
         self.happiness += 20
         self.happiness = min(self.happiness, 100)
 
+    # Unique method
+    def fetch_favorite_toy(self):
+        messagebox.showinfo("Fetch", f"{self.name} excitedly fetches the {self.favorite_toy}!")
+        self.happiness += 10
+        self.happiness = min(self.happiness, 100)
+        self.update_status_callback()
+
 class Cat(Pet):
+    def __init__(self, name, color, pattern, accessories, update_status_callback):
+        super().__init__(name, color, pattern, accessories, update_status_callback)
+        # Unique attribute
+        self.claw_sharpness = 50  # Scale from 0 to 100
+
     def characteristic(self):
         messagebox.showinfo("Pet Info", f"{self.name} is an independent and curious cat!")
 
@@ -694,39 +744,12 @@ class Cat(Pet):
         self.hunger += 15
         self.hunger = min(self.hunger, 100)
 
-class Dragon(Pet):
-    def characteristic(self):
-        messagebox.showinfo("Pet Info", f"{self.name} is a fierce and majestic dragon!")
-
-    def special_ability(self):
-        if self.life_stage == 'Teenager':
-            messagebox.showinfo("Special Ability", f"{self.name} can breathe small flames!")
-        elif self.life_stage == 'Adult':
-            messagebox.showinfo("Special Ability", f"{self.name} can fly high in the sky!")
-        elif self.life_stage == 'Senior':
-            messagebox.showinfo("Special Ability", f"{self.name} is a wise and ancient creature.")
-
-    def special_ability_effect(self):
-        messagebox.showinfo("Special Ability", f"{self.name} breathes fire to scare away threats!")
-        self.health += 25
-        self.health = min(self.health, 100)
-
-class Unicorn(Pet):
-    def characteristic(self):
-        messagebox.showinfo("Pet Info", f"{self.name} is a magical and graceful unicorn!")
-
-    def special_ability(self):
-        if self.life_stage == 'Teenager':
-            messagebox.showinfo("Special Ability", f"{self.name} can grant small wishes!")
-        elif self.life_stage == 'Adult':
-            messagebox.showinfo("Special Ability", f"{self.name} purifies water sources!")
-        elif self.life_stage == 'Senior':
-            messagebox.showinfo("Special Ability", f"{self.name} shares ancient wisdom.")
-
-    def special_ability_effect(self):
-        messagebox.showinfo("Special Ability", f"{self.name} uses magic to heal you!")
-        self.health += 30
-        self.health = min(self.health, 100)
+    # Unique method
+    def sharpen_claws(self):
+        messagebox.showinfo("Sharpen Claws", f"{self.name} sharpens its claws.")
+        self.claw_sharpness += 20
+        self.claw_sharpness = min(self.claw_sharpness, 100)
+        self.update_status_callback()
 
 class GameManager:
     def __init__(self, root):
@@ -743,8 +766,6 @@ class GameManager:
 
         tk.Button(self.selection_frame, text="Dog", command=lambda: self.choose_pet('1')).pack()
         tk.Button(self.selection_frame, text="Cat", command=lambda: self.choose_pet('2')).pack()
-        tk.Button(self.selection_frame, text="Dragon", command=lambda: self.choose_pet('3')).pack()
-        tk.Button(self.selection_frame, text="Unicorn", command=lambda: self.choose_pet('4')).pack()
 
         self.selection_frame.pack()
 
@@ -763,7 +784,8 @@ class GameManager:
         tk.Button(self.button_frame, text="Play", command=self.execute_command(PlayCommand)).grid(row=0, column=3)
         tk.Button(self.button_frame, text="Clean", command=self.execute_command(CleanCommand)).grid(row=0, column=4)
         tk.Button(self.button_frame, text="Special Ability", command=self.execute_command(SpecialAbilityCommand)).grid(row=0, column=5)
-        tk.Button(self.button_frame, text="Quit", command=self.root.quit).grid(row=0, column=6)
+        tk.Button(self.button_frame, text="Unique Action", command=self.unique_action).grid(row=0, column=6)
+        tk.Button(self.button_frame, text="Quit", command=self.root.quit).grid(row=0, column=7)
         self.button_frame.pack()
 
     def execute_command(self, command_class):
@@ -791,10 +813,6 @@ class GameManager:
             self.pet = Dog(*pet_args)
         elif choice == '2':
             self.pet = Cat(*pet_args)
-        elif choice == '3':
-            self.pet = Dragon(*pet_args)
-        elif choice == '4':
-            self.pet = Unicorn(*pet_args)
         else:
             self.pet = Dog(*pet_args)
 
@@ -806,9 +824,25 @@ class GameManager:
     def update_status(self):
         if self.pet:
             status = self.pet.status()
+            # Include unique attributes in status display
+            if isinstance(self.pet, Dog):
+                status += f"Favorite Toy: {self.pet.favorite_toy}\n"
+            elif isinstance(self.pet, Cat):
+                status += f"Claw Sharpness: {self.pet.claw_sharpness}\n"
             self.status_label.config(text=f"{self.pet.name}'s Status:\n{status}")
+
+    def unique_action(self):
+        if self.pet and self.pet.alive:
+            if isinstance(self.pet, Dog):
+                self.pet.fetch_favorite_toy()
+            elif isinstance(self.pet, Cat):
+                self.pet.sharpen_claws()
+            self.update_status()
 
 if __name__ == '__main__':
     root = tk.Tk()
     game = GameManager(root)
     root.mainloop()
+
+
+
