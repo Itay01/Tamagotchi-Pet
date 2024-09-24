@@ -8,6 +8,39 @@ from PIL import Image, ImageTk
 from tkinter.ttk import Progressbar
 import os
 import pickle
+import pygame
+import datetime
+
+
+pygame.init()
+pygame.mixer.init()
+
+
+def play_background_music(mood='neutral'):
+    pygame.mixer.music.stop()
+    if mood == 'happy':
+        music_file = 'sounds/happy_music.mp3'
+    elif mood == 'sad':
+        music_file = 'sounds/sad_music.mp3'
+    else:
+        current_hour = datetime.datetime.now().hour
+        if 6 <= current_hour < 18:
+            music_file = 'sounds/day_music.mp3'
+        else:
+            music_file = 'sounds/night_music.mp3'
+    try:
+        pygame.mixer.music.load(music_file)
+        pygame.mixer.music.play(-1)  # Loop indefinitely
+    except Exception as e:
+        print(f"Error playing background music: {e}")
+
+def play_sound_effect(sound_file):
+    try:
+        sound = pygame.mixer.Sound(sound_file)
+        sound.play()
+    except Exception as e:
+        print(f"Error playing sound effect: {e}")
+
 
 class Command(ABC):
     @abstractmethod
@@ -64,6 +97,7 @@ class SpecialAbilityCommand(Command):
 
     def execute(self):
         self.pet.activate_special_ability()
+
 
 class Pet(ABC):
     LIFE_STAGES = ['Baby', 'Child', 'Teenager', 'Adult', 'Senior']
@@ -186,6 +220,9 @@ class Pet(ABC):
         self.happiness = min(self.happiness, 100)
         self.update_status_callback()
 
+        # Play eating sound
+        play_sound_effect(f'sounds/{self.pet_type}_eat.mp3')
+
     def play_with(self):
         def play_game():
             number = random.randint(1, 5)
@@ -205,6 +242,9 @@ class Pet(ABC):
             game_window.destroy()
             self.update_status_callback()
 
+            # Play play sound
+            play_sound_effect(f'sounds/{self.pet_type}_play.mp3')
+
         game_window = tk.Toplevel()
         game_window.title("Guess the Number")
         tk.Label(game_window, text="Guess a number between 1 and 5").pack()
@@ -221,6 +261,9 @@ class Pet(ABC):
         self.cleanliness = max(0, self.cleanliness)
         messagebox.showinfo("Sleep", f"{self.name} had a good rest!")
         self.update_status_callback()
+
+        # Play sleep sound
+        play_sound_effect('sounds/sleep_sound.mp3')
 
     def exercise(self):
         self.training += 10
@@ -298,6 +341,8 @@ class Dog(Pet):
 
     def characteristic(self):
         messagebox.showinfo("Pet Info", f"{self.name} is a loyal and playful dog!")
+        # Play dog sound
+        play_sound_effect('sounds/dog_bark.mp3')
 
     def special_ability(self):
         if self.life_stage == 'Teenager':
@@ -327,6 +372,8 @@ class Cat(Pet):
 
     def characteristic(self):
         messagebox.showinfo("Pet Info", f"{self.name} is an independent and curious cat!")
+        # Play cat sound
+        play_sound_effect('sounds/cat_meow.mp3')
 
     def special_ability(self):
         if self.life_stage == 'Teenager':
@@ -353,6 +400,7 @@ class GameManager:
         self.root = root
         self.pet = None
         self.center_window(320, 500)
+        play_background_music()
 
         if os.path.exists('saved_game.pkl'):
             with open('saved_game.pkl', 'rb') as f:
@@ -537,6 +585,10 @@ class GameManager:
             self.hunger_bar["value"] = self.pet.hunger
             self.happiness_bar["value"] = self.pet.happiness
             self.health_bar["value"] = self.pet.health
+
+            # Update mood music
+            mood = self.pet.get_mood()
+            play_background_music(mood)
 
     def unique_action(self):
         if self.pet and self.pet.alive:
