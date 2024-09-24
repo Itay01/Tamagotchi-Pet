@@ -15,7 +15,7 @@ class GameManager:
         self.root = root
         self.pet = None
         self.center_window(320, 500)
-        play_background_music()
+        play_background_music(is_init_game=True)
 
         if os.path.exists('saved_game.pkl'):
             with open('saved_game.pkl', 'rb') as f:
