@@ -5,6 +5,7 @@ from helpers.sound import *
 import os
 import pickle
 from tkinter.ttk import Progressbar
+from game.commands import *
 
 from models.cat import Cat
 from models.dog import Dog
@@ -14,7 +15,7 @@ class GameManager:
     def __init__(self, root):
         self.root = root
         self.pet = None
-        self.center_window(320, 500)
+        self.center_window(400, 650)
         play_background_music(is_init_game=True)
 
         if os.path.exists('saved_game.pkl'):
@@ -25,7 +26,7 @@ class GameManager:
             self.pet.game_over_callback = self.on_pet_death
             self.pet.start_time_thread()
             if self.pet.alive:
-                self.start_game()
+                self.start_game(is_saved=True)
                 self.update_status()
             else:
                 os.remove('saved_game.pkl')
@@ -123,31 +124,32 @@ class GameManager:
                                       bg="#4CAF50", fg="white", width=15, command=self.start_game)
         self.start_button.pack(pady=20)
 
-    def start_game(self):
-        pet_name = self.name_entry.get()
-        pattern = self.pattern_entry.get()
-        accessories = self.accessories_entry.get()
-        color = self.color_entry.get()
-        pet_type = self.pet_type_var.get()
+    def start_game(self, is_saved: bool = False):
+        if not is_saved:
+            pet_name = self.name_entry.get()
+            pattern = self.pattern_entry.get()
+            accessories = self.accessories_entry.get()
+            color = self.color_entry.get()
+            pet_type = self.pet_type_var.get()
 
-        if not pet_name:
-            messagebox.showwarning("Input Error", "Please enter a name for your pet.")
-            return
-
-        if pet_type == "dog":
-            self.pet = Dog(pet_name, color, pattern, accessories, self.update_status, self.on_pet_death, "dog")
-        elif pet_type == "cat":
-            self.pet = Cat(pet_name, color, pattern, accessories, self.update_status, self.on_pet_death, "cat")
+            if pet_type == "dog":
+                self.pet = Dog(pet_name, color, pattern, accessories, self.update_status, self.on_pet_death, pet_type)
+            elif pet_type == "cat":
+                self.pet = Cat(pet_name, color, pattern, accessories, self.update_status, self.on_pet_death, pet_type)
 
         self.pet.characteristic()
-        self.selection_frame.pack_forget()
+        if self.pet is not None and is_saved == False:
+            self.selection_frame.pack_forget()
         self.setup_game_ui()
         self.update_status()
         self.pet.start_time_thread()
 
     def setup_game_ui(self):
+        self.game_frame = tk.Frame(self.root)
+        self.game_frame.pack(fill=tk.BOTH, expand=True)
+
         # Status Frame
-        self.status_frame = tk.Frame(self.root)
+        self.status_frame = tk.Frame(self.game_frame)
         self.status_frame.pack(pady=10)
 
         # Status label for displaying overall status text
@@ -173,26 +175,36 @@ class GameManager:
         self.health_bar.pack(pady=5)
 
         # Button Frame
-        self.button_frame = tk.Frame(self.root)
+        self.button_frame = tk.Frame(self.game_frame)
         self.button_frame.pack(pady=10)
 
-        # Control Buttons
-        self.feed_button = tk.Button(self.button_frame, text="Feed Meal", command=lambda: self.pet.feed('meal'))
-        self.snack_button = tk.Button(self.button_frame, text="Feed Snack", command=lambda: self.pet.feed('snack'))
-        self.play_button = tk.Button(self.button_frame, text="Play", command=self.pet.play_with)
-        self.sleep_button = tk.Button(self.button_frame, text="Sleep", command=self.pet.sleep)
-        self.exercise_button = tk.Button(self.button_frame, text="Exercise", command=self.pet.exercise)
-        self.clean_button = tk.Button(self.button_frame, text="Clean", command=self.pet.clean)
-        self.quit_button = tk.Button(self.button_frame, text="Quit", command=self.quit_game)
+        feed_btn = tk.Button(self.button_frame, text="Feed", command=lambda: self.execute_command(FeedCommand(self.pet)))
+
+        sleep_btn = tk.Button(self.button_frame, text="Sleep",
+                              command=lambda: self.execute_command(SleepCommand(self.pet)))
+
+        exercise_btn = tk.Button(self.button_frame, text="Exercise",
+                                 command=lambda: self.execute_command(ExerciseCommand(self.pet)))
+
+        play_btn = tk.Button(self.button_frame, text="Play", command=lambda: self.execute_command(PlayCommand(self.pet)))
+
+        clean_btn = tk.Button(self.button_frame, text="Clean",
+                              command=lambda: self.execute_command(CleanCommand(self.pet)))
+
+        special_ability_btn = tk.Button(self.button_frame, text="Special Ability",
+                                        command=lambda: self.execute_command(SpecialAbilityCommand(self.pet)))
+
+        quit_btn = tk.Button(self.button_frame, text="Quit",
+                                        command=self.quit_game)
 
         # Arrange buttons in a grid layout
-        self.feed_button.grid(row=0, column=0, padx=5, pady=5)
-        self.snack_button.grid(row=0, column=1, padx=5, pady=5)
-        self.play_button.grid(row=1, column=0, padx=5, pady=5)
-        self.sleep_button.grid(row=1, column=1, padx=5, pady=5)
-        self.exercise_button.grid(row=2, column=0, padx=5, pady=5)
-        self.clean_button.grid(row=2, column=1, padx=5, pady=5)
-        self.quit_button.grid(row=2, column=2, padx=5, pady=5)
+        feed_btn.grid(row=0, column=0, padx=5, pady=5)
+        sleep_btn.grid(row=0, column=1, padx=5, pady=5)
+        exercise_btn.grid(row=1, column=0, padx=5, pady=5)
+        play_btn.grid(row=1, column=1, padx=5, pady=5)
+        clean_btn.grid(row=2, column=0, padx=5, pady=5)
+        special_ability_btn.grid(row=2, column=1, padx=5, pady=5)
+        quit_btn.grid(row=3, column=0, padx=5, pady=5)
 
     def update_status(self):
         if self.pet:
@@ -204,6 +216,10 @@ class GameManager:
             # Update mood music
             mood = self.pet.get_mood()
             play_background_music(mood)
+
+    def execute_command(self, command):
+        """Execute a given command."""
+        command.execute()
 
     def unique_action(self):
         if self.pet and self.pet.alive:
@@ -220,7 +236,7 @@ class GameManager:
         messagebox.showinfo("Game Over", f"Unfortunately, {self.pet.name} has passed away.")
         # Return to pet selection
         self.game_frame.pack_forget()
-        self.setup_pet_selection()
+        self.setup_ui()
 
     def quit_game(self):
         if self.pet and self.pet.alive:

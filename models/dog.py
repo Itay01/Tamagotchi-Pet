@@ -9,6 +9,10 @@ class Dog(Pet):
         # Unique attribute
         self.favorite_toy = "Ball"
 
+    def get_mood(self):
+        """Dog-specific mood logic."""
+        return super().get_mood()
+
     def characteristic(self):
         messagebox.showinfo("Pet Info", f"{self.name} is a loyal and playful dog!")
         # Play dog sound

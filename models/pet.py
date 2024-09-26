@@ -31,6 +31,17 @@ class Pet(ABC):
         self.game_over_callback = game_over_callback
         self.game_over = False
 
+    def get_mood(self):
+        """Returns a string representing the mood of the pet based on its stats."""
+        if self.happiness > 80:
+            return "happy"
+        elif self.happiness > 50:
+            return "content"
+        elif self.happiness > 30:
+            return "grumpy"
+        else:
+            return "sad"
+
     def start_time_thread(self):
         self.time_thread = threading.Thread(target=self.time_passes)
         self.time_thread.daemon = True
@@ -139,7 +150,7 @@ class Pet(ABC):
 
 
         # Play eating sound
-        play_sound_effect(f'sounds/{self.pet_type}_eat.mp3')
+        play_sound_effect(f'sounds/{self.pet_type}_play.mp3')
 
     def play_with(self):
         def play_game():

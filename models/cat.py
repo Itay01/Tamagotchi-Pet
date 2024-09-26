@@ -9,6 +9,10 @@ class Cat(Pet):
         # Unique attribute
         self.claw_sharpness = 50  # Scale from 0 to 100
 
+    def get_mood(self):
+        """Cat-specific mood logic."""
+        return super().get_mood()
+
     def characteristic(self):
         messagebox.showinfo("Pet Info", f"{self.name} is an independent and curious cat!")
         # Play cat sound
